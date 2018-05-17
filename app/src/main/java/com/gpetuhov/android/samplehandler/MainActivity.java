@@ -4,9 +4,8 @@ import android.os.Handler;
 import android.os.Looper;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.widget.TextView;
 import android.widget.Toast;
-
-import java.util.concurrent.TimeUnit;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -16,10 +15,14 @@ public class MainActivity extends AppCompatActivity {
 
   private MyHandlerThread myHandlerThread;
 
+  private TextView textView;
+
   @Override
   protected void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
     setContentView(R.layout.activity_main);
+
+    textView = findViewById(R.id.text);
   }
 
   @Override
@@ -30,7 +33,7 @@ public class MainActivity extends AppCompatActivity {
     Thread myThread = new Thread(new Runnable() {
       @Override
       public void run() {
-        sleep(5);
+        Utils.sleep(5);
 
         Runnable showToast = new Runnable() {
           @Override
@@ -42,7 +45,7 @@ public class MainActivity extends AppCompatActivity {
         // We cannot show Toast message from background thread directly, so we use our handler
         handler.post(showToast);
 
-        sleep(5);
+        Utils.sleep(5);
 
         // Or we can create new handler and pass looper from the main thread into it
         new Handler(Looper.getMainLooper()).post(showToast);
@@ -54,7 +57,7 @@ public class MainActivity extends AppCompatActivity {
     Runnable anotherTask = new Runnable() {
       @Override
       public void run() {
-        sleep(3);
+        Utils.sleep(3);
 
         handler.post(new Runnable() {
           @Override
@@ -72,14 +75,12 @@ public class MainActivity extends AppCompatActivity {
     myHandlerThread.postTask(anotherTask);
     // Second task will be enqueued and will run only after the first task has been executed
     myHandlerThread.postTask(anotherTask);
-  }
 
-  private void sleep(int timeout) {
-    try {
-      TimeUnit.SECONDS.sleep(timeout);
-    } catch (InterruptedException e) {
-      e.printStackTrace();
-    }
+    myHandlerThread.postCustomMessage(textView);
+    myHandlerThread.postCustomMessage(textView);
+
+    // postTask() and postCustomMessage() use different handlers, but message queue is the same,
+    // so all of the above four messages will be handled sequentially
   }
 
   @Override
