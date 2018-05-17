@@ -14,6 +14,8 @@ public class MainActivity extends AppCompatActivity {
   // so here Handler is using Looper from the UI thread.
   private Handler handler = new Handler();
 
+  private MyHandlerThread myHandlerThread;
+
   @Override
   protected void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
@@ -28,9 +30,9 @@ public class MainActivity extends AppCompatActivity {
     Thread myThread = new Thread(new Runnable() {
       @Override
       public void run() {
-        sleep();
+        sleep(5);
 
-        Runnable task = new Runnable() {
+        Runnable showToast = new Runnable() {
           @Override
           public void run() {
             Toast.makeText(MainActivity.this, "Message from background thread", Toast.LENGTH_SHORT).show();
@@ -38,21 +40,43 @@ public class MainActivity extends AppCompatActivity {
         };
 
         // We cannot show Toast message from background thread directly, so we use our handler
-        handler.post(task);
+        handler.post(showToast);
 
-        sleep();
+        sleep(5);
 
         // Or we can create new handler and pass looper from the main thread into it
-        new Handler(Looper.getMainLooper()).post(task);
+        new Handler(Looper.getMainLooper()).post(showToast);
       }
     });
 
     myThread.start();
+
+    Runnable anotherTask = new Runnable() {
+      @Override
+      public void run() {
+        sleep(3);
+
+        handler.post(new Runnable() {
+          @Override
+          public void run() {
+            Toast.makeText(MainActivity.this, "Message from HandlerThread", Toast.LENGTH_SHORT).show();
+          }
+        });
+      }
+    };
+
+    // myThread cannot be reused, it can only be recreated. To post multiple tasks we should use HandlerThread
+    myHandlerThread = new MyHandlerThread("myHandlerThread");
+    myHandlerThread.start();
+    myHandlerThread.prepareHandler();
+    myHandlerThread.postTask(anotherTask);
+    // Second task will be enqueued and will run only after the first task has been executed
+    myHandlerThread.postTask(anotherTask);
   }
 
-  private void sleep() {
+  private void sleep(int timeout) {
     try {
-      TimeUnit.SECONDS.sleep(5);
+      TimeUnit.SECONDS.sleep(timeout);
     } catch (InterruptedException e) {
       e.printStackTrace();
     }
