@@ -1,6 +1,7 @@
 package com.gpetuhov.android.samplehandler;
 
 import android.os.Handler;
+import android.os.Looper;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.widget.Toast;
@@ -27,22 +28,33 @@ public class MainActivity extends AppCompatActivity {
     Thread myThread = new Thread(new Runnable() {
       @Override
       public void run() {
-        try {
-          TimeUnit.SECONDS.sleep(2);
-        } catch (InterruptedException e) {
-          e.printStackTrace();
-        }
+        sleep();
 
-        // We cannot show Toast message from background thread directly, so we use our handler
-        handler.post(new Runnable() {
+        Runnable task = new Runnable() {
           @Override
           public void run() {
             Toast.makeText(MainActivity.this, "Message from background thread", Toast.LENGTH_SHORT).show();
           }
-        });
+        };
+
+        // We cannot show Toast message from background thread directly, so we use our handler
+        handler.post(task);
+
+        sleep();
+
+        // Or we can create new handler and pass looper from the main thread into it
+        new Handler(Looper.getMainLooper()).post(task);
       }
     });
 
     myThread.start();
+  }
+
+  private void sleep() {
+    try {
+      TimeUnit.SECONDS.sleep(5);
+    } catch (InterruptedException e) {
+      e.printStackTrace();
+    }
   }
 }
